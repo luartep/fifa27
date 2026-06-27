@@ -1,0 +1,58 @@
+:root {
+  --bg: #080b12;
+  --s1: #0f1420;
+  --s2: #161c2e;
+  --s3: #1d2540;
+  --border: rgba(255, 255, 255, 0.06);
+  --border2: rgba(255, 255, 255, 0.11);
+  --gold: #f5c842;
+  --gold2: rgba(245, 200, 66, 0.13);
+  --green: #1fd97d;
+  --green2: rgba(31, 217, 125, 0.12);
+  --red: #f05252;
+  --red2: rgba(240, 82, 82, 0.12);
+  --amber: #f5a623;
+  --amber2: rgba(245, 166, 35, 0.12);
+  --blue: #4f8ef7;
+  --blue2: rgba(79, 142, 247, 0.12);
+  --purple: #a78bf7;
+  --purple2: rgba(167, 139, 247, 0.12);
+  --text: #dde4f2;
+  --muted: #5a6888;
+  --dim: #2e3a55;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--s3);
+  border-radius: 2px;
+}
