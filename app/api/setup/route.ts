@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     // ── 1. Crear tablas ──
     log.push("Creando tablas...");
 
-    await sql.query(`
+    await sql`
       CREATE TABLE IF NOT EXISTS matches (
         id SERIAL PRIMARY KEY,
         external_id VARCHAR(120) NOT NULL UNIQUE,
@@ -80,10 +80,10 @@ export async function GET(req: NextRequest) {
         created_at TIMESTAMPTZ DEFAULT now(),
         updated_at TIMESTAMPTZ DEFAULT now()
       );
-    `);
+    `;
     log.push("✓ Tabla matches");
 
-    await sql.query(`
+    await sql`
       CREATE TABLE IF NOT EXISTS odds_history (
         id SERIAL PRIMARY KEY,
         match_id INTEGER NOT NULL,
@@ -95,10 +95,10 @@ export async function GET(req: NextRequest) {
         source VARCHAR(40) DEFAULT 'oddschecker',
         scraped_at TIMESTAMPTZ DEFAULT now()
       );
-    `);
+    `;
     log.push("✓ Tabla odds_history");
 
-    await sql.query(`
+    await sql`
       CREATE TABLE IF NOT EXISTS simulated_bets (
         id SERIAL PRIMARY KEY,
         user_id VARCHAR(40) NOT NULL DEFAULT 'apuesta',
@@ -111,10 +111,10 @@ export async function GET(req: NextRequest) {
         settled_at TIMESTAMPTZ,
         placed_at TIMESTAMPTZ DEFAULT now()
       );
-    `);
+    `;
     log.push("✓ Tabla simulated_bets");
 
-    await sql.query(`
+    await sql`
       CREATE TABLE IF NOT EXISTS learning_stats (
         id SERIAL PRIMARY KEY,
         market_key VARCHAR(40) NOT NULL UNIQUE,
@@ -123,17 +123,17 @@ export async function GET(req: NextRequest) {
         total INTEGER NOT NULL DEFAULT 0,
         updated_at TIMESTAMPTZ DEFAULT now()
       );
-    `);
+    `;
     log.push("✓ Tabla learning_stats");
 
-    await sql.query(`
+    await sql`
       CREATE TABLE IF NOT EXISTS sim_bankroll (
         id SERIAL PRIMARY KEY,
         user_id VARCHAR(40) NOT NULL UNIQUE DEFAULT 'apuesta',
         balance NUMERIC(14,2) NOT NULL DEFAULT 100000,
         updated_at TIMESTAMPTZ DEFAULT now()
       );
-    `);
+    `;
     log.push("✓ Tabla sim_bankroll");
 
     // ── 2. Cargar calendario completo ──
@@ -174,10 +174,24 @@ async function loadSchedule(sql: ReturnType<typeof neon>): Promise<number> {
   let count = 0;
 
   for (const m of ALL) {
-    await sql.query(
-      `
-      INSERT INTO matches (external_id, group_name, home_team, away_team, home_flag, away_flag, venue, oddschecker_url, kickoff_utc, status, home_score, away_score)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    const oddscheckerUrl = m.oddscheckerUrl ?? null;
+    const status = m.status ?? "scheduled";
+    const homeScore = m.homeScore ?? null;
+    const awayScore = m.awayScore ?? null;
+
+    // Interpolación directa en el template literal: el driver de Neon
+    // escapa cada valor de forma segura (no es concatenación de strings
+    // ni está expuesto a inyección SQL) — es la forma "nativa" y
+    // completamente tipada de pasar parámetros con este cliente.
+    await sql`
+      INSERT INTO matches (
+        external_id, group_name, home_team, away_team, home_flag, away_flag,
+        venue, oddschecker_url, kickoff_utc, status, home_score, away_score
+      )
+      VALUES (
+        ${m.externalId}, ${m.group}, ${m.homeTeam}, ${m.awayTeam}, ${m.homeFlag}, ${m.awayFlag},
+        ${m.venue}, ${oddscheckerUrl}, ${m.kickoffUtc}, ${status}, ${homeScore}, ${awayScore}
+      )
       ON CONFLICT (external_id) DO UPDATE SET
         kickoff_utc = EXCLUDED.kickoff_utc,
         venue = EXCLUDED.venue,
@@ -185,22 +199,7 @@ async function loadSchedule(sql: ReturnType<typeof neon>): Promise<number> {
         home_score = EXCLUDED.home_score,
         away_score = EXCLUDED.away_score,
         updated_at = now();
-      `,
-      [
-        m.externalId,
-        m.group,
-        m.homeTeam,
-        m.awayTeam,
-        m.homeFlag,
-        m.awayFlag,
-        m.venue,
-        m.oddscheckerUrl ?? null,
-        m.kickoffUtc,
-        m.status ?? "scheduled",
-        m.homeScore ?? null,
-        m.awayScore ?? null,
-      ]
-    );
+    `;
     count++;
   }
 
